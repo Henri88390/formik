@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import { Formik, FormikTouched } from "formik";
+import { Formik, FormikErrors, FormikTouched } from "formik";
 import { useState } from "react";
 import Form1 from "./Form1";
 import Form2 from "./Form2";
@@ -30,35 +30,47 @@ function FormsWrapper() {
     moreInfo: "",
   };
   function onSubmit(event: any) {
-    console.log("xd");
+    console.log("submit");
   }
-  function handleNextClick() {
-    console.log("next");
-    setStep((prev) => prev + 1);
+  function handleNextClick(
+    isValid: boolean,
+    {
+      name,
+      age,
+      email,
+      phone,
+      vat,
+      address,
+      moreInfo,
+    }: FormikTouched<Form2Schema>,
+    setFieldTouched: (
+      field: string,
+      isTouched?: boolean | undefined,
+      shouldValidate?: boolean | undefined
+    ) => Promise<void | FormikErrors<Form2Schema>>
+  ) {
+    if (
+      (step === 0 && isValid && (name || age || phone || email)) ||
+      (step === 1 && isValid && (vat || address || moreInfo))
+    ) {
+      setStep((prev) => prev + 1);
+    } else {
+      if (step === 0) {
+        setFieldTouched("name");
+        setFieldTouched("age");
+        setFieldTouched("email");
+        setFieldTouched("phone");
+      }
+
+      if (step === 1) {
+        setFieldTouched("vat");
+        setFieldTouched("moreInfo");
+        setFieldTouched("address");
+      }
+    }
   }
   function handlePreviousClick() {
     setStep((prev) => prev - 1);
-  }
-
-  function fnIsTouched({
-    name,
-    age,
-    phone,
-    email,
-    address,
-    vat,
-    moreInfo,
-  }: FormikTouched<{
-    name: string;
-    age: string | number;
-    phone: string;
-    email: string;
-    address: string;
-    vat: string | number;
-    moreInfo: string;
-  }>) {
-    if (step === 0) return name || age || phone || email;
-    if (step === 1) return address || vat || moreInfo;
   }
 
   return (
@@ -67,7 +79,7 @@ function FormsWrapper() {
       validationSchema={getValidationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, touched, handleSubmit }) => {
+      {({ isValid, handleSubmit, touched, setFieldTouched }) => {
         return (
           <div className={styles.container}>
             <div className={styles.headerWrapper}>
@@ -92,9 +104,10 @@ function FormsWrapper() {
               </Button>
               <Button
                 onClick={() =>
-                  step === 1 ? handleSubmit() : handleNextClick()
+                  step === 1
+                    ? handleSubmit()
+                    : handleNextClick(isValid, touched, setFieldTouched)
                 }
-                disabled={!isValid || !fnIsTouched(touched)}
                 variant="contained"
                 type={step === 1 ? "submit" : "button"}
               >
